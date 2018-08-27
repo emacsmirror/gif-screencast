@@ -1,8 +1,8 @@
 ;;; gif-screencast.el --- One-frame-per-action GIF recording -*- lexical-binding: t -*-
 
-;; Copyright (C) 2018 Pierre Neidhardt <ambrevar@gmail.com>
+;; Copyright (C) 2018 Pierre Neidhardt <mail@ambrevar.xyz>
 
-;; Author: Pierre Neidhardt <ambrevar@gmail.com>
+;; Author: Pierre Neidhardt <mail@ambrevar.xyz>
 ;; URL: https://gitlab.com/ambrevar/emacs-gif-screencast
 ;; Version: 1.0
 ;; Package-Requires: ((emacs "25.1"))
