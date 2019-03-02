@@ -45,7 +45,7 @@ to record the demo all over again.
 
 * Implementation
 
-Upon start, it adds ~gid-screencast-capture~ to ~pre-command-hook~ which makes
+Upon start, it adds ~gif-screencast-capture~ to ~pre-command-hook~ which makes
 every command (including those called by key presses) take a screenshot.  On
 each screenshot, it records the timestamp.
 
