@@ -91,4 +91,4 @@ macOS requires some additional settings:
 
 ** Display pressed keys while recording
 
-The [[https://github.com/tarsius/keycast][KeyCast]] package is useful to dispay the pressed keys in the modeline while recording.
+The [[https://github.com/tarsius/keycast][KeyCast]] package is useful to display the pressed keys in the modeline while recording.
