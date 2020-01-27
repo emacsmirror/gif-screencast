@@ -92,3 +92,20 @@ macOS requires some additional settings:
 ** Display pressed keys while recording
 
 The [[https://github.com/tarsius/keycast][KeyCast]] package is useful to display the pressed keys in the modeline while recording.
+
+* Troubleshooting
+
+** Process 'convert' aborted (core dumped)
+
+It's possible that your ImageMagick installation has a too limited "disk
+resource" policy.  See the output of
+
+#+begin_src sh
+convert -list resource
+#+end_src
+
+Setting it to a high enough value like 10 GiB in =/etc/ImageMagick-6/policy.xml=
+should fix it.
+
+See https://github.com/ImageMagick/ImageMagick/issues/396 for more details on
+this issue.
