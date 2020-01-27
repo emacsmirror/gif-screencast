@@ -76,6 +76,12 @@ You might want to set some bindings for convenience.
 
 Start recording with ~gif-screencast~!
 
+Alternatively, you can bind =gif-screencast-start-or-stop= to a global key:
+
+#+begin_src emacs-lisp
+(global-set-key (kbd "<f9>") 'gif-screencast-start-or-stop)
+#+end_src
+
 ** macOS
 
 macOS requires some additional settings:

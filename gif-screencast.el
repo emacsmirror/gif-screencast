@@ -345,6 +345,13 @@ A screenshot is taken before every command runs."
   (setq gif-screencast--frames (nreverse gif-screencast--frames))
   (gif-screencast--finish))
 
+(defun gif-screencast-start-or-stop ()
+  "Start a screencast or stop it if already screencasting."
+  (interactive)
+  (if gif-screencast-mode
+    (gif-screencast-stop)
+    (gif-screencast)))
+
 (provide 'gif-screencast)
 
 ;;; gif-screencast.el ends here
