@@ -1,6 +1,6 @@
 ;;; gif-screencast.el --- One-frame-per-action GIF recording -*- lexical-binding: t -*-
 
-;; Copyright (C) 2018, 2019 Pierre Neidhardt <mail@ambrevar.xyz>
+;; Copyright (C) 2018, 2019, 2020 Pierre Neidhardt <mail@ambrevar.xyz>
 
 ;; Author: Pierre Neidhardt <mail@ambrevar.xyz>
 ;; URL: https://gitlab.com/ambrevar/emacs-gif-screencast
@@ -35,6 +35,7 @@
 ;; TODO: Add support for on-screen keystroke display, e.g. screenkey.
 
 (require 'xdg)
+(require 'cl-lib)
 
 (defgroup gif-screencast nil
   "Predefined configurations for `gif-screencast'."
@@ -138,6 +139,12 @@ This may help reduce the stutter in the result. "
 (defvar gif-screencast--gc-cons-threshold-original gc-cons-threshold
   "Backup of `gc-cons-threshold' when `gif-screencast-gc-cons-threshold' is used.")
 
+(defcustom gif-screencast-first-delay "100"
+  "The pause of the first frame, in centiseconds.
+Note this must be a string."
+  :group 'gif-screencast
+  :type 'string)
+
 (defvar gif-screencast--frames nil
   "A frame is a plist in the form '(:time :file :offset).")
 (defvar gif-screencast--offset 0
@@ -197,48 +204,50 @@ Return the process."
            command
            args)))
 
+(cl-defstruct gif-screencast-frame
+  timestamp filename)
+
 (defun gif-screencast--generate-gif (process event)
   "Generate GIF file."
   (when process
     (gif-screencast-print-status process event))
-  (let (delays
-        (index 0)
-        (frames gif-screencast--frames))
-    (while (cdr frames)
-      (push (list "(" "-clone" (number-to-string index) "-set" "delay"
-                  ;; Converters delays are expressed in centiseconds.
-                  (format "%d" (* 100 (float-time
-                                       (time-subtract (car (cadr frames)) (caar frames)))))
-                  ")" "-swap" (number-to-string index) "+delete")
-            delays)
-      (setq index (1+ index)
-            frames (cdr frames)))
-    (message "Compiling GIF with %s..." gif-screencast-convert-program)
-    (let ((output (expand-file-name
-                   (format-time-string "output-%F-%T.gif" (current-time))
-                   (or (and (file-writable-p gif-screencast-output-directory)
-                            gif-screencast-output-directory)
-                       (read-directory-name "Save output to directory: "))))
-          p)
-      (setq p (gif-screencast--start-process
-               gif-screencast-convert-program
-               (append
-                gif-screencast-convert-args
-                (mapcar 'cdr gif-screencast--frames)
-                ;; Delays must come after the file arguments.
-                (apply 'nconc delays)
-                (list output))))
-      (set-process-sentinel p (lambda (process event)
-                                (gif-screencast-print-status process event)
-                                (when (and gif-screencast-want-optimized
-                                           (eq (process-status process) 'exit)
-                                           (= (process-exit-status process) 0))
-                                  (gif-screencast-optimize output))
-                                (when (and gif-screencast-autoremove-screenshots
-                                           (eq (process-status process) 'exit)
-                                           (= (process-exit-status process) 0))
-                                  (dolist (f gif-screencast--frames)
-                                    (delete-file (cdr f)))))))))
+  (message "Compiling GIF with %s..." gif-screencast-convert-program)
+  (let* ((output-filename (expand-file-name
+                           (format-time-string "output-%F-%T.gif" (current-time))
+                           (or (and (file-writable-p gif-screencast-output-directory)
+                                    gif-screencast-output-directory)
+                               (read-directory-name "Save output to directory: "))))
+         (delays (cl-loop for (this-frame next-frame . _)
+                          on gif-screencast--frames
+                          by #'cdr
+                          ;; Converters delays are expressed in centiseconds.
+                          for delay = (when next-frame
+                                        (format "%d" (* 100 (float-time
+                                                             (time-subtract (gif-screencast-frame-timestamp next-frame)
+                                                                            (gif-screencast-frame-timestamp this-frame))))))
+                          when next-frame
+                          collect delay))
+         (delays (cons gif-screencast-first-delay delays))
+         (files-args (cl-loop for frame in gif-screencast--frames
+                              for delay in delays
+                              append (list "-delay" delay (gif-screencast-frame-filename frame))))
+         (convert-args (append gif-screencast-convert-args
+                               files-args
+                               (list output-filename)))
+         (convert-process (gif-screencast--start-process
+                           gif-screencast-convert-program
+                           convert-args)))
+    (set-process-sentinel convert-process (lambda (process event)
+                                            (gif-screencast-print-status process event)
+                                            (when (and gif-screencast-want-optimized
+                                                       (eq (process-status process) 'exit)
+                                                       (= (process-exit-status process) 0))
+                                              (gif-screencast-optimize output-filename))
+                                            (when (and gif-screencast-autoremove-screenshots
+                                                       (eq (process-status process) 'exit)
+                                                       (= (process-exit-status process) 0))
+                                              (dolist (f gif-screencast--frames)
+                                                (delete-file (gif-screencast-frame-filename f))))))))
 
 (defun gif-screencast--cropping-region ()
   "Return the cropping region of the captured image."
@@ -285,7 +294,10 @@ Return the process."
                gif-screencast-args
                (list file)))))
       (set-process-sentinel p 'gif-screencast-capture-sentinel))
-    (push (cons (time-subtract time gif-screencast--offset) file) gif-screencast--frames)))
+    (push (make-gif-screencast-frame
+           :timestamp (time-subtract time gif-screencast--offset)
+           :filename file)
+          gif-screencast--frames)))
 
 ;;;###autoload
 (defun gif-screencast ()
