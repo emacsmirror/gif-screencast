@@ -305,8 +305,8 @@ A screenshot is taken before every command runs."
       (dolist (i (number-sequence gif-screencast-countdown 1 -1))
         (message "Start recording GIF in %s... (Press %s to stop, %s to resume.)"
                  i
-               (substitute-command-keys "\\[gif-screencast-stop]")
-               (substitute-command-keys "\\[gif-screencast-toggle-pause]"))
+                 (substitute-command-keys "\\[gif-screencast-stop]")
+                 (substitute-command-keys "\\[gif-screencast-toggle-pause]"))
         (sleep-for 0.7))
       (message nil)
       (when (> gif-screencast-gc-cons-threshold 0)
