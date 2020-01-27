@@ -112,7 +112,7 @@ returning a list of strings. "
   :type 'boolean)
 
 (defcustom gif-screencast-output-directory (or (getenv "XDG_VIDEOS_DIR")
-					       (xdg-user-dir "VIDEOS")
+                                               (xdg-user-dir "VIDEOS")
                                                (expand-file-name "Videos/emacs/" "~"))
   "Output directory for the GIF file."
   :group 'gif-screencast
