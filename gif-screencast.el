@@ -129,6 +129,15 @@ If you are a macOS user, \"ppm\" should be specified."
   :group 'gif-screencast
   :type 'integer)
 
+(defcustom gif-screencast-gc-cons-threshold 0
+  "If non-zero, set `gc-cons-threshold' to this value while recording.
+This may help reduce the stutter in the result. "
+  :group 'gif-screencast
+  :type 'integer)
+
+(defvar gif-screencast--gc-cons-threshold-original gc-cons-threshold
+  "Backup of `gc-cons-threshold' when `gif-screencast-gc-cons-threshold' is used.")
+
 (defvar gif-screencast--frames nil
   "A frame is a plist in the form '(:time :file :offset).")
 (defvar gif-screencast--offset 0
@@ -299,6 +308,9 @@ A screenshot is taken before every command runs."
       (message "Go! (Press %s to stop, %s to resume)"
                (substitute-command-keys "\\[gif-screencast-stop]")
                (substitute-command-keys "\\[gif-screencast-toggle-pause]"))
+      (when (> gif-screencast-gc-cons-threshold 0)
+        (setq gif-screencast--gc-cons-threshold-original gc-cons-threshold)
+        (setq gc-cons-threshold gif-screencast-gc-cons-threshold))
       (add-hook 'pre-command-hook 'gif-screencast-capture))))
 
 (defun gif-screencast-toggle-pause ()
@@ -342,6 +354,7 @@ A screenshot is taken before every command runs."
   (interactive)
   (remove-hook 'pre-command-hook 'gif-screencast-capture)
   (gif-screencast-mode 0)
+  (setq gc-cons-threshold gif-screencast--gc-cons-threshold-original)
   (setq gif-screencast--frames (nreverse gif-screencast--frames))
   (gif-screencast--finish))
 
