@@ -170,6 +170,24 @@ If you are a macOS user, \"ppm\" should be specified."
         (gif-screencast--crop)
       (gif-screencast--generate-gif nil nil))))
 
+(defun gif-screencast--start-process (command args)
+  "A simpler `start-process'.
+ARGS is a list.
+Return the process."
+  (let ((log-buffer (get-buffer-create gif-screencast-log)))
+    (with-current-buffer log-buffer
+      (goto-char (point-max))
+      (newline)
+      (newline)
+      (insert (format "[%s] %s %s" (current-time-string) command
+                      (mapconcat (lambda (s) (format "%s" s)) args " ")))
+      (newline))
+    (apply 'start-process
+           command
+           log-buffer
+           command
+           args)))
+
 (defun gif-screencast--generate-gif (process event)
   "Generate GIF file."
   (when process
@@ -193,16 +211,14 @@ If you are a macOS user, \"ppm\" should be specified."
                             gif-screencast-output-directory)
                        (read-directory-name "Save output to directory: "))))
           p)
-      (setq p (apply 'start-process
-                     gif-screencast-convert-program
-                     (get-buffer-create gif-screencast-log)
-                     gif-screencast-convert-program
-                     (append
-                      gif-screencast-convert-args
-                      (mapcar 'cdr gif-screencast--frames)
-                      ;; Delays must come after the file arguments.
-                      (apply 'nconc delays)
-                      (list output))))
+      (setq p (gif-screencast--start-process
+               gif-screencast-convert-program
+               (append
+                gif-screencast-convert-args
+                (mapcar 'cdr gif-screencast--frames)
+                ;; Delays must come after the file arguments.
+                (apply 'nconc delays)
+                (list output))))
       (set-process-sentinel p (lambda (process event)
                                 (gif-screencast-print-status process event)
                                 (when (and gif-screencast-want-optimized
@@ -233,16 +249,14 @@ If you are a macOS user, \"ppm\" should be specified."
           (message "Cropping captured images with %s..."
                    gif-screencast-cropping-program)
           (let ((process-connection-type nil)
-                (p (apply 'start-process
-                          "cropping"
-                          (get-buffer-create gif-screencast-log)
-                          gif-screencast-cropping-program
-                          (append (cond
-                                   ((functionp gif-screencast-cropping-args)
-                                    (funcall gif-screencast-cropping-args))
-                                   (t
-                                    gif-screencast-cropping-args))
-                                  (mapcar 'cdr gif-screencast--frames)))))
+                (p (gif-screencast--start-process
+                    gif-screencast-cropping-program
+                    (append (cond
+                             ((functionp gif-screencast-cropping-args)
+                              (funcall gif-screencast-cropping-args))
+                             (t
+                              gif-screencast-cropping-args))
+                            (mapcar 'cdr gif-screencast--frames)))))
             (set-process-sentinel p 'gif-screencast--generate-gif)))
       (message "Cropping program '%s' not found (See `gif-screencast-cropping-program')" gif-screencast-cropping-program)
       (gif-screencast--generate-gif nil nil))))
@@ -256,12 +270,11 @@ If you are a macOS user, \"ppm\" should be specified."
                         gif-screencast-capture-format)
                 gif-screencast-screenshot-directory)))
     (setq gif-screencast--counter (+ gif-screencast--counter 1))
-    (let ((p (apply 'start-process gif-screencast-program
-                    (get-buffer-create gif-screencast-log)
-                    gif-screencast-program
-                    (append
-                     gif-screencast-args
-                     (list file)))))
+    (let ((p (gif-screencast--start-process
+              gif-screencast-program
+              (append
+               gif-screencast-args
+               (list file)))))
       (set-process-sentinel p 'gif-screencast-capture-sentinel))
     (push (cons (time-subtract time gif-screencast--offset) file) gif-screencast--frames)))
 
@@ -317,13 +330,11 @@ A screenshot is taken before every command runs."
 (defun gif-screencast-optimize (file)
   "Optimize GIF FILE asynchronously."
   (message "Optimizing with %s..." gif-screencast-optimize-program)
-  (let ((p (apply 'start-process
-                  gif-screencast-optimize-program
-                  (get-buffer-create gif-screencast-log)
-                  gif-screencast-optimize-program
-                  (append
-                   gif-screencast-optimize-args
-                   (list file)))))
+  (let ((p (gif-screencast--start-process
+            gif-screencast-optimize-program
+            (append
+             gif-screencast-optimize-args
+             (list file)))))
     (set-process-sentinel p 'gif-screencast-print-status)))
 
 (defun gif-screencast-stop ()
