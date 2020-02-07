@@ -274,7 +274,7 @@ Return the process."
                               (funcall gif-screencast-cropping-args))
                              (t
                               gif-screencast-cropping-args))
-                            (mapcar 'cdr gif-screencast--frames)))))
+                            (mapcar #'gif-screencast-frame-filename gif-screencast--frames)))))
             (set-process-sentinel p 'gif-screencast--generate-gif)))
       (message "Cropping program '%s' not found (See `gif-screencast-cropping-program')" gif-screencast-cropping-program)
       (gif-screencast--generate-gif nil nil))))
