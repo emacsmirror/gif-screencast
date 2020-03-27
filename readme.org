@@ -95,6 +95,11 @@ macOS requires some additional settings:
 
 [[https://imagemagick.org/script/mogrify.php][mogrify]] is part of the ImageMagick suite.
 
+** HiDPI screens
+
+On HiDPI screens the result may be incorrectly cropped.
+Set ~gif-screencast-scale-factor~ to the scale factor of your screen to fix this.
+
 ** Display pressed keys while recording
 
 The [[https://github.com/tarsius/keycast][KeyCast]] package is useful to display the pressed keys in the modeline while recording.
