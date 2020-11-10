@@ -324,7 +324,7 @@ Return the process."
           gif-screencast--frames)))
 
 (defun gif-screencast-capture--internal (filename)
-  "Save screenshot captured by emacs itself to `filename'."
+  "Save screenshot captured by Emacs itself to `filename'."
   (with-temp-file filename
     (insert (x-export-frames nil 'png)))
   (kill-new filename)
