@@ -66,6 +66,13 @@ You can pass arguments to the screenshot program via ~git-screencast-args~ to
 command it to capture only part of the screen, e.g. you can restrict the capture
 to the Emacs frame with =scrot='s argument =--focused=
 
+Example configuration using =convert= as a capture program:
+
+#+begin_src elisp
+  (setq gif-screencast-program "convert"
+        gif-screencast-args '("x:root"))
+#+end_src
+
 You might want to set some bindings for convenience.
 
 #+BEGIN_SRC emacs-lisp
